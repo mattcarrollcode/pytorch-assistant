@@ -1,0 +1,7 @@
+beautifulsoup4==4.11.1
+langchain==0.0.69
+openai==0.26.3
+PyYAML==6.0
+requests==2.28.2
+Flask==2.2.2
+faiss-cpu==1.7.3
