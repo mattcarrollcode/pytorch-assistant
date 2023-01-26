@@ -1,4 +1,4 @@
-#
+# PyTorch Assistant
 
 # Setup
 
@@ -51,3 +51,9 @@
 ## Backend
 
 `curl -d '{"query":"test"}' -H "Content-Type: application/json" -X POST http://localhost:5000/query`
+
+# Todo
+
+- Update training script to skip training if PKL files are already present
+- Seperate training script from python backend (seperaete dependencies)
+- Create react frontend
