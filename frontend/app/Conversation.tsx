@@ -1,23 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import internal from "stream";
 import useSWR from "swr";
-
-type Content = {
-  text: string;
-  links?: Array<string>;
-};
-
-type Message = {
-  user: string;
-  content?: Content;
-  lastMessage?: string;
-};
-
-type MessageProps = {
-  message: Message;
-  onNewContent: (content: Content) => void;
-};
 
 async function fetcher<JSON = any>(
   input: RequestInfo,
@@ -27,58 +12,66 @@ async function fetcher<JSON = any>(
   return res.json();
 }
 
-type BotResponse = {
-  messages: Array<BotMessage>;
+type Message = {
+  id?: number;
+  user: string;
+  text: string;
+  prev?: string;
 };
 
 type BotMessage = {
+  source: string;
   message: string;
-  source: string;
-  links?: Array<string>;
-};
-
-type APIMessage = {
-  source: string;
-  text: string;
   links: Array<string>;
 };
 
-function LoadBotChat({ message, onNewContent }: MessageProps) {
-  const { data, isLoading, error } = useSWR(
-    `/api/bot?query=${message.lastMessage}`,
-    fetcher
+type ChatProps = {
+  message: Message;
+  onMessageUpdate: (message: Message) => void;
+};
+
+function Chat({ message, onMessageUpdate }: ChatProps) {
+  // Go get the reply from the bot
+  if (message.prev) {
+    console.log(message.prev);
+    const { data, error } = useSWR<BotMessage>(
+      `/api/bot?query=${message.prev}`,
+      fetcher
+    );
+    if (data) {
+      console.log(data);
+      message.text = data.message;
+      // onMessageUpdate(message);
+    }
+    if (error) {
+      message.text = "Whoops!";
+      // onMessageUpdate(message);
+    }
+  }
+  return (
+    <h3>
+      {message.user}: {message.text}
+    </h3>
   );
-  if (error) {
-    console.log(error);
-    // onNewContent({
-    //   text: "Whoops! There was a problem talking to PyTorch Assistant...",
-    // });
-  }
-  if (data) {
-    console.log("data");
-    const apiData: APIMessage = data as APIMessage;
-    onNewContent({
-      text: apiData.source + apiData.text,
-      links: apiData.links,
-    });
-  }
-  return <h3>PyTorch Assistant: ...</h3>;
 }
-function UserInputChat({ message, onNewContent }: MessageProps) {
+
+type UserInputProps = {
+  onMessageUpdate: (message: Message) => void;
+};
+
+function UserInput({ onMessageUpdate }: UserInputProps) {
   const query = useRef<HTMLInputElement>(null);
   const leaveEntry = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
-    console.log(query);
-    console.log(query.current?.value);
-    const queryText = query.current?.value as string;
-    if (queryText == "") {
+    const text = query.current?.value as string;
+    if (text == "") {
       return;
     }
-    onNewContent({ text: queryText });
+    const newMessage = { user: "me", text: text };
+    onMessageUpdate(newMessage);
   };
   return (
     <>
-      <h3>You:</h3>
       <form onSubmit={leaveEntry}>
         <input
           ref={query}
@@ -91,58 +84,48 @@ function UserInputChat({ message, onNewContent }: MessageProps) {
     </>
   );
 }
-function StaticChat({ user, content }: Message) {
-  return (
-    <h3>
-      {user}: {content?.text}
-    </h3>
-  );
-}
-
-function Chat({ message, onNewContent }: MessageProps) {
-  if (message.user == "bot") {
-    return <LoadBotChat message={message} onNewContent={onNewContent} />;
-  }
-  if (message.user == "me") {
-    return <UserInputChat message={message} onNewContent={onNewContent} />;
-  }
-  return <StaticChat user={message.user} content={message.content} />;
-}
 
 export default function Conversation() {
-  const [messages, setMessages] = useState([{ user: "me" }]);
-  // console.log(messages);
+  const [messages, setMessages] = useState<Array<Message>>([]);
 
-  const handleNewContent = (content: Content) => {
-    let updatedMessages = messages.slice();
-    let currentMessage: Message = updatedMessages[updatedMessages.length - 1];
-
-    // Set current message content
-    currentMessage.content = content;
-
-    // Create new message for response
-    let nextUser: string;
-    if (currentMessage.user == "me") {
-      nextUser = "bot";
+  const handleMessageUpdate = (message: Message) => {
+    if (!message.id) {
+      const newMessages = messages.slice();
+      const newUserChat = message;
+      newUserChat.id = messages.length;
+      const botReplyChat: Message = {
+        user: "bot",
+        text: "...",
+        prev: message.text,
+        id: messages.length + 1,
+      };
+      setMessages([...newMessages, newUserChat, botReplyChat]);
     } else {
-      nextUser = "me";
+      let newMessages = messages.slice();
+      newMessages[message.id] = message;
+      setMessages(newMessages);
     }
-    const nextMessage: Message = { user: nextUser };
-    if (nextUser == "bot") {
-      nextMessage.lastMessage = content.text;
-    }
-    // console.log("update");
-    console.log([...updatedMessages, nextMessage]);
-    setMessages([...updatedMessages, nextMessage]);
   };
 
   return (
     <>
       {messages.map((message, index) => {
         return (
-          <Chat key={index} message={message} onNewContent={handleNewContent} />
+          <Chat
+            key={index}
+            message={message}
+            onMessageUpdate={(message: Message) => {
+              handleMessageUpdate(message);
+            }}
+          />
         );
       })}
+
+      <UserInput
+        onMessageUpdate={(message) => {
+          handleMessageUpdate(message);
+        }}
+      />
     </>
   );
 }
