@@ -1,6 +1,5 @@
 import os
 import pickle
-# from openai import OpenAI
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.llms import OpenAI
 from flask import Flask, request

@@ -37,9 +37,15 @@ type BotMessage = {
   links?: Array<string>;
 };
 
+type APIMessage = {
+  source: string;
+  text: string;
+  links: Array<string>;
+};
+
 function LoadBotChat({ message, onNewContent }: MessageProps) {
   const { data, isLoading, error } = useSWR(
-    `http://127.0.0.1:5000/?query=${message.lastMessage}`,
+    `/api/bot?query=${message.lastMessage}`,
     fetcher
   );
   if (error) {
@@ -50,11 +56,10 @@ function LoadBotChat({ message, onNewContent }: MessageProps) {
   }
   if (data) {
     console.log("data");
-    const botResponse = data as BotResponse;
-    const src = botResponse.messages[0];
+    const apiData: APIMessage = data as APIMessage;
     onNewContent({
-      text: src.source + src.message,
-      links: src.links,
+      text: apiData.source + apiData.text,
+      links: apiData.links,
     });
   }
   return <h3>PyTorch Assistant: ...</h3>;
@@ -106,7 +111,7 @@ function Chat({ message, onNewContent }: MessageProps) {
 
 export default function Conversation() {
   const [messages, setMessages] = useState([{ user: "me" }]);
-  console.log(messages);
+  // console.log(messages);
 
   const handleNewContent = (content: Content) => {
     let updatedMessages = messages.slice();
@@ -126,7 +131,8 @@ export default function Conversation() {
     if (nextUser == "bot") {
       nextMessage.lastMessage = content.text;
     }
-
+    // console.log("update");
+    console.log([...updatedMessages, nextMessage]);
     setMessages([...updatedMessages, nextMessage]);
   };
 

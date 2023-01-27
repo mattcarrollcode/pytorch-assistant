@@ -2,8 +2,6 @@
 
 # Setup
 
-## Dependencies
-
 ### Python
 
 - clone this repo and `cd` to the root of the repo
@@ -17,9 +15,6 @@
   ```
 - install Python version 3.11.1: `pyenv install 3.11.1`
 - restart your shell/terminal
-- Create a new virtual env: `pyenv virtualenv 3.11.1 pytorch-assistant`
-- configure pyenv to use the virtual env in the current directory: `pyenv local pytorch-assistant`
-- Install the Python dependencies: `pip install -r requirements.txt`
 
 ### OpenAI API key
 
@@ -27,24 +22,30 @@
 - Create a new API key
 - Add your OpenAI API key to your enviorment: `export OPENAI_API_KEY="PUT_OPEN_API_KEY_HERE"`
 
-### FAISS
+### Training
 
-- Install miniconda: `brew install --cask miniconda`
-- Install FAISS from miniconda: `conda install -c pytorch faiss-cpu`
+- Create a new virtual env: `pyenv virtualenv 3.11.1 pytorch-assistant-training`
+- `cd` to the `training` directory
+- configure pyenv to use the virtual env in the current directory: `pyenv local pytorch-assistant-training`
+- Install the Python dependencies: `pip install -r requirements.txt`
+- Run the training script (this may take a while e.g. hours and you may run into limits on OpenAI's free teir): `python train.py`
 
-## Training
+### Backend
 
-- `python train.py`
+- Create a new virtual env: `pyenv virtualenv 3.11.1 pytorch-assistant-backend`
+- `cd` to the `backend` directory
+- configure pyenv to use the virtual env in the current directory: `pyenv local pytorch-assistant-backend`
+- Install the Python dependencies: `pip install -r requirements.txt`
+- After training has completed copy the `knowledgebase` and `vectorstore` folders from `training` to `backend`
+- start the backend server: `flask --app main.py --debug run`
 
-## Backend
+### Front end
 
-- `flask --app main run`
-
-## Frontend
-
-- `cd frontend`
-- `npm install`
-- `npm run dev`
+- Install nvm: `brew install nvm`
+- Install node v18.12.1: `nvm install v18.12.1`
+- `cd` to the `frontend` folder
+- Run: `npm install`
+- Start the frontend server: `npm run dev`
 
 # Testing
 
@@ -55,7 +56,6 @@
 # Todo
 
 - Update training script to skip training if PKL files are already present
-- Seperate training script from python backend (seperaete dependencies)
 - Create react frontend
   - https://beta.nextjs.org/docs/api-reference/use-search-params
   - https://beta.nextjs.org/docs/data-fetching/mutating
