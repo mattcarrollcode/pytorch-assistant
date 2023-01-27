@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "source": "blogs.pkl",
+      "message": " To make an experiment deterministic, you can use the torch.set_deterministic() function and set torch.backends.cudnn.deterministic to True. Note that this is necessary, but not sufficient, for determinism within a single run of a PyTorch program.\n",
+      "links": [
+        " ",
+        "https://pytorch.org/blog/pytorch-1.7-released/, ",
+        "https://pytorch.org/docs/stable/generated/torch.set_deterministic.html, ",
+        "https://pytorch.org/blog/pytorch-1.9-released/"
+      ]
+    },
+    {
+      "source": "forum.pkl",
+      "message": " Deterministic experiments can be achieved by using the same random seed for all random operations. This ensures that the same sequence of random numbers is generated each time the experiment is run.\n",
+      "links": [" https://pytorch.org/docs/stable/notes/randomness.html"]
+    },
+    {
+      "source": "docs.pkl",
+      "message": " To make an experiment deterministic, you can use torch.manual_seed() to seed the RNG for all devices (both CPU and CUDA), disable the benchmarking feature with torch.backends.cudnn.benchmark = False, set torch.use_deterministic_algorithms(True) or torch.backends.cudnn.deterministic = True, and use worker_init_fn and generator with DataLoader.\n",
+      "links": [" https://pytorch.org/docs/stable/notes/randomness.html"]
+    }
+  ]
+}

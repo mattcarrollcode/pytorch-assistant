@@ -50,10 +50,13 @@
 
 ## Backend
 
-`curl -d '{"query":"test"}' -H "Content-Type: application/json" -X POST http://localhost:5000/query`
+`curl http://localhost:5000/?query=hi`
 
 # Todo
 
 - Update training script to skip training if PKL files are already present
 - Seperate training script from python backend (seperaete dependencies)
 - Create react frontend
+  - https://beta.nextjs.org/docs/api-reference/use-search-params
+  - https://beta.nextjs.org/docs/data-fetching/mutating
+  - https://github.com/vercel/examples/tree/main/solutions/ai-chatgpt

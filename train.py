@@ -23,12 +23,15 @@ from langchain.llms import OpenAI
 EMBED = "openai"
 embeddings = OpenAIEmbeddings()
 
+
 def preprocess_and_pickle(page_iter, src_name):
     docs = []
     splitter = CharacterTextSplitter(separator="\n", chunk_size=1024)
     for page in page_iter:
-        docs.extend((splitter.create_documents([page['text']], [page['metadata']])))
+        docs.extend((splitter.create_documents(
+            [page['text']], [page['metadata']])))
     pickle.dump(docs, open(f'knowledgebase/{src_name}.pkl', 'wb'))
+
 
 def get_blogs(repo_owner='pytorch', repo_name='pytorch.github.io'):
     with tempfile.TemporaryDirectory() as d:
@@ -52,12 +55,15 @@ def get_blogs(repo_owner='pytorch', repo_name='pytorch.github.io'):
                 yield {'text': f.read(), 'metadata': {"source": blog_url}}
 # preprocess_and_pickle(get_blogs(), 'blogs')
 
+
 def get_forum(period='weekly'):
     host = "https://discuss.pytorch.org"
 
     def _get_accepted_topics(period, page=0, dst=[]):
-        resp = requests.get(host+f'/top.json?page={page}&period={period}&per_page=100').json()
-        dst.extend([(d['id'], d['title']) for d in resp['topic_list']['topics'] if d['has_accepted_answer'] is True])
+        resp = requests.get(
+            host+f'/top.json?page={page}&period={period}&per_page=100').json()
+        dst.extend([(d['id'], d['title']) for d in resp['topic_list']
+                   ['topics'] if d['has_accepted_answer'] is True])
         if 'more_topics_url' in resp['topic_list'].keys():
             page += 1
             _get_accepted_topics(period=period, page=page, dst=dst)
@@ -75,14 +81,17 @@ def get_forum(period='weekly'):
         except JSONDecodeError:
             continue
         try:
-            q = title + '? ' + _process_cooked(r['post_stream']['posts'][0]['cooked'])
-            a = _process_cooked([x['cooked'] for x in r['post_stream']['posts'] if x['accepted_answer'] is True][0])
+            q = title + '? ' + \
+                _process_cooked(r['post_stream']['posts'][0]['cooked'])
+            a = _process_cooked(
+                [x['cooked'] for x in r['post_stream']['posts'] if x['accepted_answer'] is True][0])
         except IndexError:
             print(f"Skipping https://discuss.pytorch.org/t/{t}/")
             continue
         text = "QUESTION: " + q + ' ANSWER: ' + a
         yield {'text': text, 'metadata': {'source': f"https://discuss.pytorch.org/t/{t}/"}}
 # preprocess_and_pickle(get_forum(), 'forum')
+
 
 def get_docs(repo_owner='pytorch', repo_name='pytorch'):
     with tempfile.TemporaryDirectory() as d:
@@ -102,9 +111,8 @@ def get_docs(repo_owner='pytorch', repo_name='pytorch'):
                 i = markdown_file.parts.index('source')
                 filename = os.path.splitext(relative_path)[0]
                 page_url = f"https://pytorch.org/docs/stable/{filename}.html"
-                yield {'text': f.read(), 'metadata': {"source": page_url}, "file":relative_path}
+                yield {'text': f.read(), 'metadata': {"source": page_url}, "file": relative_path}
 # preprocess_and_pickle(get_docs(), 'docs')
-
 
 
 def create_vectorstores():
@@ -114,20 +122,22 @@ def create_vectorstores():
         out_path = f"vectorstore/{EMBED.lower()}_embeddings/{source}.pkl"
         if os.path.exists(out_path):
             continue
-            
+
         pages = pickle.load(open(os.path.join('knowledgebase', source), 'rb'))
         docsearch = FAISS.from_documents([pages.pop(0)], embeddings)
         i, step = 0, 30
-        while i<len(pages):
+        while i < len(pages):
             texts = [d.page_content for d in pages[i:i+step]]
             meta = [d.metadata for d in pages[i:i+step]]
             try:
                 docsearch.add_texts(texts, meta)
                 i += step
             except RateLimitError:
-                print("Hit RateLimit @ i=",i)
+                print("Hit RateLimit @ i=", i)
                 time.sleep(60)
         pickle.dump(docsearch, open(out_path, "wb"))
+
+
 create_vectorstores()
 base_llm = OpenAI(temperature=0.2)
 qa_chain = load_qa_with_sources_chain(base_llm, chain_type="stuff")

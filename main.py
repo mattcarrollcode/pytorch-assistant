@@ -10,9 +10,9 @@ base_llm = OpenAI(temperature=0.2)
 qa_chain = load_qa_with_sources_chain(base_llm, chain_type="stuff")
 
 
-@app.route('/query', methods=['POST'])
+@app.route('/')
 def foo():
-    query = request.json['query']
+    query = request.args.get('query')
     print(query)
     data = get_query_result(query)
     print(data)
@@ -28,6 +28,17 @@ def get_query_result(query):
         db = pickle.load(open(vectordb, 'rb'))
 
         relevant_docs = db.similarity_search(query, k=4)
-        response['messages'].append({"source": source, "message": qa_chain.run(
-            input_documents=relevant_docs, question=query)})
+        oai_response = qa_chain.run(
+            input_documents=relevant_docs, question=query)
+        print(oai_response)
+        split = oai_response.split('SOURCES:')
+        message = split[0].strip(' ').strip('\n')
+        links = []
+        for dirty_link in split[1].split('\n'):
+            if dirty_link == ' ':
+                continue
+            links.append(dirty_link.strip(' ').strip(','))
+
+        response['messages'].append(
+            {"source": source, "message": message, "links": links})
     return response
