@@ -1,5 +1,13 @@
 # PyTorch Assistant
 
+**This is a proof of concept chat app demo that uses OpenAI's GPT models and data from PyTorch's blog, forum, and docs to to provide PyTorch specific responses, creating a "PyTorch assistant".**
+
+The web application essentially:
+
+1. Takes a query from the user
+2. Finds the most relevant content from PyTorches blog, forum, and documentation the query using a pre-built vector database
+3. Use's OpenAI's API to respond to the user using natural language using the relvent content from PyTorches blog, forum, and documentation
+
 # Setup
 
 ### Python
